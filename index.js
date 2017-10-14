@@ -13,6 +13,7 @@ var config = { headers: {
 var ids_string;
 var ids_string2;
 var req_body;
+var features_arr;
 
 //
 // axios.get(base_url + "/token/" + login_token)
@@ -67,42 +68,49 @@ async function CallDocumentAPI() {
     if (next_url != this_url) {
       console.log("OK, Let's get it!");
       console.log();
+
+      var img_arr = data.images;
+      // console.log(next_url);
+      // console.log(img_arr);
+
+      // 중복 제거 작업
+      var img_obj = {};
+      for (var element of img_arr) {
+        img_obj[`${element.id}`] = element.type;
+      }
+      // 초기화
+      ids_string = "id=";
+      ids_string2 = "id=";
+      // add 인 경우만 골라서 스트링 생성
+      var cnt = 0;
+      for (var prop in img_obj) {
+        if (cnt < 50) {
+          if (img_obj[prop] == 'add') {
+            ids_string += (prop + ',');
+            cnt++;
+          }
+        } else {
+          ids_string2 += (prop + ',');
+          cnt++;
+        }
+      }
+      // console.log(ids_string);
+      // console.log(ids_string[ids_string.length-1]);
+      ids_string = ids_string.slice(0, ids_string.length-1);
+      ids_string2 = ids_string.slice(0, ids_string2.length-1);
+      // console.log(ids_string);
+
     } else {
       console.log("Let me do it again");
       console.log();
       res = await axios.get(base_url + doc_ids_arr[0], config);
     }
 
-    var img_arr = data.images;
-    // console.log(next_url);
-    // console.log(img_arr);
 
-    // 중복 제거 작업
-    var img_obj = {};
-    for (var element of img_arr) {
-      img_obj[`${element.id}`] = element.type;
-    }
-    // 초기화
-    ids_string = "id=";
-    ids_string2 = "id=";
-    // add 인 경우만 골라서 스트링 생성
-    var cnt = 0;
-    for (var prop in img_obj) {
-      if (cnt < 50) {
-        if (img_obj[prop] == 'add') {
-          ids_string += (prop + ',');
-          cnt++;
-        }
-      } else {
-        ids_string2 += (prop + ',');
-        cnt++;
-      }
-    }
-    // console.log(ids_string);
-    // console.log(ids_string[ids_string.length-1]);
-    ids_string = ids_string.slice(0, ids_string.length-1);
-    ids_string2 = ids_string.slice(0, ids_string2.length-1);
-    // console.log(ids_string);
+
+
+
+
   } catch (err) {
     console.log(err);
   }
@@ -117,15 +125,58 @@ async function GetFeatures() {
     const res = await axios.get(base_url + "/image/feature?" + ids_string, config);
     var data = res.data;
     // console.log(res.data);
-    var features_arr = data.features;
+    features_arr = data.features;
     req_body = {
+      headers: {
+          "X-Auth-Token": submit_token
+        },
       "data": features_arr
     };
-    console.log(req_body);
+    // console.log(req_body);
   } catch (err) {
     console.log(err);
   }
 
+}
+
+async function SaveFeature(id_feature_obj) {
+  try {
+    // const res = await axios.post(base_url + "/image/feature", req_body);
+    const res = await axios({
+      method: 'post',
+      url: base_url + "/image/feature",
+      headers: {
+          "X-Auth-Token": submit_token
+        },
+      data: {
+        data: id_feature_obj
+      }
+    });
+    console.log("Save Status : " + res.status);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function DeleteFeature(id_obj) {
+  try {
+
+    const res = await axios({
+      method: 'post',
+      url: base_url + "/image/feature",
+      headers: {
+          "X-Auth-Token": submit_token
+        },
+      data: {
+        data: id_obj
+      }
+    });
+
+    console.log("Delete Status : " + res.status);
+
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 
@@ -136,13 +187,17 @@ async function DoAll() {
   // await CallTokenAPI();
 
   // 10분 전에 다시 시도할 때는 이걸 사용
-  config.headers["X-Auth-Token"] = "TyDeQ73VjylbmU9nQ2pv2wbxNi-dDMOZEgv9Ku0dpXGm74VNkibJbMy90KQmMAd9EqkDdDV";
+  submit_token = "Tdg4VkvynNl1JcX8-6kZ6b39vf-7Dw8bJ3ZKlupvW-gdXqRGDAJXJ36jvZqM3iVZ9KrVY8E";
+  config.headers["X-Auth-Token"] = submit_token;
 
   await CallSeedAPI();
+  // 여기까지는 그냥 진행하면 되고 아래부터는 여러 호출을 동시에 진행해야 할 것 같다.
 
   await CallDocumentAPI();
 
   await GetFeatures();
+
+  await SaveFeature(features_arr);
 
 
 
