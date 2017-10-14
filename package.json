@@ -1,0 +1,17 @@
+{
+  "name": "rest",
+  "version": "1.0.0",
+  "description": "Hee Jae Chae's rest api",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "nodemon": "nodemon index.js"
+  },
+  "author": "Hee Jae Chae",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.16.2",
+    "express": "^4.16.2",
+    "nodemon": "^1.12.1"
+  }
+}
